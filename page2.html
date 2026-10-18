@@ -169,7 +169,7 @@
   </div>
 
   <!-- Audio played only by Question 2's Yes button -->
-  <audio id="yesSound" src="yes-sound.mp3"
+  <audio id="yesSound" src="./yes-sound.mp3"
          preload="auto"></audio>
 
 
@@ -186,110 +186,17 @@
     </div>
   </section>
 
-  <!-- QUESTION 2  (abhi jagah chhodi hai, baad mein bharenge) -->
+  <!-- QUESTION 2 -->
   <section class="q" id="q2">
-    <h1 class="qtext">(Question 2 yahan aayega)</h1>
+    <h1 class="qtext">do you ever feel like I bother you by texting you or sending you reels? 🥹❤️</h1>
     <div class="opts" id="q2opts">
-      <!-- Question 2 ke options yahan aayenge -->
+      <button id="yes2" type="button">हाँ</button>
+      <button id="no2" type="button" disabled>ना</button>
     </div>
   </section>
 
 </div>
 
-/* QUESTION 2: SOUND + IMAGES */
-
-const yes2 = document.getElementById('yes2');
-const no2 = document.getElementById('no2');
-const popup = document.getElementById('imagePopup');
-const popupImage = document.getElementById('popupImage');
-const closePopup = document.getElementById('closePopup');
-const yesSound = document.getElementById('yesSound');
-
-let q2YesClicked = false;
-let popupOpen = false;
-let q2Timer = null;
-
-function showPopup(imagePath) {
-  popupImage.src = imagePath;
-  popup.style.display = 'flex';
-  void popup.offsetWidth;
-  popup.classList.add('open');
-}
-
-function hidePopup() {
-  popup.classList.remove('open');
-
-  setTimeout(() => {
-    popup.style.display = 'none';
-    popupImage.src = '';
-    popupOpen = false;
-  }, 650);
-}
-
-yes2.addEventListener('click', async () => {
-  if (q2YesClicked || popupOpen) return;
-
-  q2YesClicked = true;
-  popupOpen = true;
-  yes2.disabled = true;
-
-  yesSound.currentTime = 0;
-
-  try {
-    await yesSound.play();
-  } catch (error) {
-    console.warn('Audio play nahi hua:', error);
-  }
-
-  showPopup('image1.jpg');
-
-  q2Timer = setTimeout(() => {
-    no2.disabled = false;
-    hidePopup();
-    q2Timer = null;
-  }, 8000);
-});
-
-no2.addEventListener('click', () => {
-  if (!q2YesClicked || popupOpen || no2.disabled) return;
-
-  popupOpen = true;
-  showPopup('image2.jpg');
-});
-
-closePopup.addEventListener('click', () => {
-  if (q2Timer !== null) {
-    clearTimeout(q2Timer);
-    q2Timer = null;
-    no2.disabled = false;
-  }
-
-  hidePopup();
-});
-
-popup.addEventListener('click', (event) => {
-  if (event.target === popup) {
-    if (q2Timer !== null) {
-      clearTimeout(q2Timer);
-      q2Timer = null;
-      no2.disabled = false;
-    }
-
-    hidePopup();
-  }
-});
-
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && popupOpen) {
-    if (q2Timer !== null) {
-      clearTimeout(q2Timer);
-      q2Timer = null;
-      no2.disabled = false;
-    }
-
-    hidePopup();
-  }
-});
 
 <script>
 /* =====================================================
@@ -480,6 +387,97 @@ yes.addEventListener('click', async () => {
   await vanish();
   showQ($('q1'));
 })();
+
+
+/* =====================================================
+   QUESTION 2: SOUND + IMAGES
+   Media files live beside page2.html, so use relative paths.
+   ===================================================== */
+const yes2 = document.getElementById('yes2');
+const no2 = document.getElementById('no2');
+const popup = document.getElementById('imagePopup');
+const popupImage = document.getElementById('popupImage');
+const closePopup = document.getElementById('closePopup');
+const yesSound = document.getElementById('yesSound');
+
+let q2YesClicked = false;
+let popupOpen = false;
+let q2Timer = null;
+let popupCloseTimer = null;
+
+function showPopup(imagePath) {
+  if (popupCloseTimer !== null) {
+    clearTimeout(popupCloseTimer);
+    popupCloseTimer = null;
+  }
+  popupImage.src = imagePath;
+  popup.style.display = 'flex';
+  void popup.offsetWidth;
+  popup.classList.add('open');
+  popupOpen = true;
+}
+
+function hidePopup() {
+  popup.classList.remove('open');
+  if (popupCloseTimer !== null) clearTimeout(popupCloseTimer);
+  popupCloseTimer = setTimeout(() => {
+    popup.style.display = 'none';
+    popupImage.src = '';
+    popupOpen = false;
+    popupCloseTimer = null;
+  }, 650);
+}
+
+yes2.addEventListener('click', async () => {
+  // Every click restarts the sound and the 8-second Image 1 display.
+  q2YesClicked = true;
+  no2.disabled = true;
+
+  if (q2Timer !== null) {
+    clearTimeout(q2Timer);
+    q2Timer = null;
+  }
+
+  yesSound.pause();
+  yesSound.currentTime = 0;
+
+  try {
+    await yesSound.play();
+  } catch (error) {
+    console.warn('Audio could not play:', error);
+  }
+
+  showPopup('./image1.jpg');
+
+  q2Timer = setTimeout(() => {
+    no2.disabled = false;
+    hidePopup();
+    q2Timer = null;
+  }, 8000);
+});
+
+no2.addEventListener('click', () => {
+  if (!q2YesClicked || no2.disabled) return;
+  showPopup('./image2.jpg');
+});
+
+function closePopupManually() {
+  if (q2Timer !== null) {
+    clearTimeout(q2Timer);
+    q2Timer = null;
+    no2.disabled = false;
+  }
+  hidePopup();
+}
+
+closePopup.addEventListener('click', closePopupManually);
+popup.addEventListener('click', (event) => {
+  if (event.target === popup) closePopupManually();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && popupOpen) closePopupManually();
+});
+
 </script>
 </body>
 </html>
