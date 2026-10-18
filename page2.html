@@ -1,6 +1,285 @@
 <!DOCTYPE html>
-<html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page 2</title></head>
-<body style="margin:0;background:#FFF0F5;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Georgia,serif;color:#8b2e4a">
-<p>Page 2 jald aa raha hai 💕</p>
-</body></html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kuch sawal 💕</title>
+<style>
+  :root {
+    --wine:#4A171E;    /* gehra burgundy */
+    --cream:#E9DFC9;   /* cream */
+  }
+  html, body { margin:0; height:100%; overflow:hidden; }
+  body {
+    font-family:"Georgia","Times New Roman",serif; color:var(--cream);
+    background:
+      radial-gradient(ellipse at 50% 45%, #6a2430 0%, var(--wine) 45%, #2e0d12 100%);
+  }
+  #sparks { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+  /* ---------- Upar wala typewriter ---------- */
+  #topText {
+    position:fixed; top:7vh; left:0; right:0; z-index:5;
+    min-height:3em; padding:0 24px; box-sizing:border-box;
+    text-align:center; font-size:clamp(18px,2.7vw,28px); line-height:1.6;
+    text-shadow:0 2px 14px rgba(0,0,0,.45);
+    white-space:pre-wrap; pointer-events:none;
+    opacity:0; transition:opacity .8s ease;
+  }
+  #topText.on { opacity:1; }
+  .cursor {
+    display:inline-block; width:2px; height:1.1em; background:var(--cream);
+    vertical-align:text-bottom; margin-left:2px; animation:blink .9s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity:0; } }
+
+  /* ---------- Questions ---------- */
+  #stage { position:fixed; inset:0; z-index:2; display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; }
+  .q {
+    display:none; opacity:0; transition:opacity 1.2s ease;
+    background:var(--cream); color:var(--wine); border-radius:28px;
+    padding:40px 44px; max-width:520px; width:100%; box-sizing:border-box; text-align:center;
+    box-shadow:
+      inset 0 0 0 7px var(--cream), inset 0 0 0 8.5px rgba(74,23,30,.35),
+      0 0 60px rgba(233,223,201,.18), 0 24px 60px rgba(0,0,0,.5);
+  }
+  .q.show { opacity:1; animation:floaty 5s ease-in-out infinite; }
+  @keyframes floaty { 50% { transform:translateY(-6px); } }
+  .qtext { margin:0 0 30px; font-size:clamp(22px,4vw,32px); font-weight:normal; line-height:1.4; }
+  .opts { display:flex; gap:18px; justify-content:center; flex-wrap:wrap; }
+
+  button {
+    font-family:"Segoe UI",system-ui,sans-serif; font-size:18px; cursor:pointer;
+    padding:12px 36px; border-radius:999px; border:2px solid var(--wine);
+    user-select:none; -webkit-user-select:none; touch-action:manipulation;
+    box-shadow:0 6px 16px rgba(0,0,0,.28);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  button:hover { transform:translateY(-2px) scale(1.05); box-shadow:0 10px 22px rgba(0,0,0,.35); }
+  #yes { background:var(--wine); color:var(--cream); position:relative; z-index:20; }
+  #no  { background:var(--cream); color:var(--wine); }
+  #no.fly { position:fixed; z-index:10; margin:0; transition:left .45s ease, top .45s ease, transform .2s ease, box-shadow .2s ease; }
+  .shake { animation:shake .35s; }
+  @keyframes shake { 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+  .ph { display:inline-block; }
+</style>
+</head>
+<body>
+
+<canvas id="sparks"></canvas>
+
+<div id="topText"></div>
+
+<div id="stage">
+
+  <!-- QUESTION 1 -->
+  <section class="q" id="q1">
+    <h1 class="qtext">mai tumhara achha dost hu na🥰</h1>
+    <div class="opts">
+      <button id="yes">Yes</button>
+      <button id="no">No</button>
+    </div>
+  </section>
+
+  <!-- QUESTION 2  (abhi jagah chhodi hai, baad mein bharenge) -->
+  <section class="q" id="q2">
+    <h1 class="qtext">(Question 2 yahan aayega)</h1>
+    <div class="opts" id="q2opts">
+      <!-- Question 2 ke options yahan aayenge -->
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =====================================================
+   SETTINGS  -  yahan se text aur timing badal
+   ===================================================== */
+const INTRO_TEXT = 'Kuch dikhane se pehle, tumhe mere kuch sawalo ke jawab dene honge 😌';
+
+// No ke paas jaane par upar ye text ek-ek karke aate hain (phir loop)
+const NO_MESSAGES = [
+  'yaa allah ........ dekh rahe ho aap iss ladki ko 😒',
+  'arrey arrey nahi maan rahi ho tum ..... jayda shaani ban rahi ho 🤣',
+  'no kyu kar rahi hai mai achha dost nahi hu 😭🥹'
+];
+
+const TYPE_SPEED     = 55;      // ms per letter (kam = tez)
+const START_DELAY    = 1000;    // page khulne ke kitni der baad typewriter shuru
+const INTRO_HOLD     = 5000;    // intro text poora hone ke kitni der baad gayab
+const MSG_HOLD       = 2500;    // No wale text poora hone ke kitni der baad gayab
+const YES_UNLOCK     = 20000;   // pehli baar No ke paas jaane ke kitni der baad Yes kaam kare
+const NEAR_DISTANCE  = 90;      // cursor No ke kitne paas aaye to No kudke bhaage (px)
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const topEl = $('topText');
+let finished = false;           // Yes dabne ke baad true
+
+/* Typewriter (upar wala text) */
+async function typeMsg(text) {
+  topEl.textContent = '';
+  const cur = document.createElement('span');
+  cur.className = 'cursor';
+  topEl.appendChild(cur);
+  topEl.classList.add('on');
+  for (const ch of Array.from(text)) {        // emoji ko sahi se todta hai
+    if (finished) return;
+    cur.before(document.createTextNode(ch));
+    await sleep(TYPE_SPEED + ('.,'.includes(ch) ? 220 : 0));
+  }
+}
+async function vanish() {                      // text fade-out hoke gayab
+  topEl.classList.remove('on');
+  await sleep(800);
+  topEl.textContent = '';
+}
+
+/* Question fade-in / fade-out */
+function showQ(q) {
+  q.style.display = 'block';
+  void q.offsetWidth;                          // browser ko display apply karne do
+  q.classList.add('show');
+}
+async function hideQ(q) {
+  q.classList.remove('show');
+  await sleep(1200);
+  q.style.display = 'none';
+}
+
+/* =====================================================
+   NO BUTTON  -  cursor paas aaye to poori screen pe kahin bhi kud jata hai
+   ===================================================== */
+const yes = $('yes'), no = $('no');
+let started = false, yesUnlocked = false, busy = false, msgIndex = 0, lastJump = 0;
+let mouseX = -999, mouseY = -999;
+
+function randomSpot() {
+  const w = no.offsetWidth, h = no.offsetHeight, m = 12;
+  const minTop = Math.min(120, innerHeight - h - m);     // upar text ke liye jagah
+  const yr = yes.getBoundingClientRect(), card = $('q1').getBoundingClientRect(), pad = 24;
+  let x, y;
+  for (let k = 0; k < 50; k++) {
+    x = m + Math.random() * Math.max(1, innerWidth  - w - 2 * m);
+    y = minTop + Math.random() * Math.max(1, innerHeight - h - minTop - m);
+    const hit = rc => x < rc.right + pad && x + w > rc.left - pad && y < rc.bottom + pad && y + h > rc.top - pad;
+    const nearCur = Math.hypot(x + w / 2 - mouseX, y + h / 2 - mouseY) < 200;
+    if (!hit(yr) && !hit(card) && !nearCur) break;   // Yes aur question card se bachke
+  }
+  return { x, y };
+}
+
+function jump() {
+  if (!no.classList.contains('fly')) {         // pehli baar: button ko screen pe azaad karo
+    const r = no.getBoundingClientRect();
+    const ph = document.createElement('span'); // asli jagah khaali rakho taaki Yes hile nahi
+    ph.className = 'ph'; ph.style.width = r.width + 'px'; ph.style.height = r.height + 'px';
+    no.before(ph);
+    no.style.left = r.left + 'px'; no.style.top = r.top + 'px';
+    no.classList.add('fly');
+    document.body.appendChild(no);
+    void no.offsetWidth;
+  }
+  const p = randomSpot();
+  no.style.left = p.x + 'px'; no.style.top = p.y + 'px';
+}
+
+async function triggerMessage() {              // upar ka agla text
+  if (busy || finished) return;
+  busy = true;
+  const msg = NO_MESSAGES[msgIndex++ % NO_MESSAGES.length];
+  await typeMsg(msg);
+  if (!finished) { await sleep(MSG_HOLD); await vanish(); }
+  busy = false;
+}
+
+function onApproach() {
+  if (finished) return;
+  const now = Date.now();
+  if (now - lastJump < 350) return;            // bahut jaldi-jaldi na kude
+  lastJump = now;
+  if (!started) {                              // pehli baar: 20 second ka timer
+    started = true;
+    setTimeout(() => { yesUnlocked = true; }, YES_UNLOCK);
+  }
+  jump();
+  triggerMessage();
+}
+
+/* cursor paas aaya? */
+document.addEventListener('pointermove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  if (finished) return;
+  const r = no.getBoundingClientRect();
+  const dx = Math.max(r.left - mouseX, 0, mouseX - r.right);
+  const dy = Math.max(r.top  - mouseY, 0, mouseY - r.bottom);
+  if (Math.hypot(dx, dy) < NEAR_DISTANCE) onApproach();
+});
+/* mobile touch / click pe bhi kud jaye */
+no.addEventListener('pointerdown', e => { e.preventDefault(); onApproach(); });
+no.addEventListener('click', e => { e.preventDefault(); onApproach(); });
+
+/* =====================================================
+   YES BUTTON
+   ===================================================== */
+yes.addEventListener('click', async () => {
+  if (!yesUnlocked || finished) {              // abhi kaam nahi karega
+    yes.classList.remove('shake'); void yes.offsetWidth; yes.classList.add('shake');
+    return;
+  }
+  finished = true;
+  no.remove();
+  topEl.classList.remove('on');
+  await hideQ($('q1'));
+  topEl.textContent = '';
+  showQ($('q2'));                              // Question 2 fade-in
+});
+
+/* =====================================================
+   SPARKLES  -  peeche halke cream dot upar udte hain
+   ===================================================== */
+(function () {
+  const cv = $('sparks'), g = cv.getContext('2d');
+  let W, H, dots = [];
+  function size() {
+    W = cv.width = innerWidth; H = cv.height = innerHeight;
+    const n = Math.max(24, Math.min(70, Math.round(W * H / 18000)));
+    dots = Array.from({ length: n }, () => mk(true));
+  }
+  function mk(first) {
+    return { x: Math.random() * W, y: first ? Math.random() * H : H + 10,
+             r: 0.8 + Math.random() * 2.2, v: 0.15 + Math.random() * 0.45,
+             drift: Math.random() * 6.28, tw: Math.random() * 6.28 };
+  }
+  function frame(t) {
+    g.clearRect(0, 0, W, H);
+    for (const d of dots) {
+      d.y -= d.v; d.drift += 0.01; d.x += Math.sin(d.drift) * 0.3; d.tw += 0.03;
+      if (d.y < -10) Object.assign(d, mk(false));
+      g.globalAlpha = 0.15 + (Math.sin(d.tw) * 0.5 + 0.5) * 0.45;
+      g.fillStyle = '#E9DFC9';
+      g.shadowColor = '#E9DFC9'; g.shadowBlur = 8;
+      g.beginPath(); g.arc(d.x, d.y, d.r, 0, 6.283); g.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize', size);
+  size(); requestAnimationFrame(frame);
+})();
+
+/* =====================================================
+   SHURUAT:  typewriter, phir Question 1
+   ===================================================== */
+(async function start() {
+  await sleep(START_DELAY);
+  await typeMsg(INTRO_TEXT);
+  await sleep(INTRO_HOLD);
+  await vanish();
+  showQ($('q1'));
+})();
+</script>
+</body>
+</html>
