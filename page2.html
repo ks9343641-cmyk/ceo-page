@@ -76,7 +76,7 @@
 
 #no2:disabled {
   opacity: 0.45;
-  cursor: pointer;
+  cursor: not-allowed;
   transform: none;
 }
 
@@ -154,6 +154,49 @@
   }
 }
 
+
+/* Buddy at the same bottom-left position as index.html; hidden until No is approached */
+#q1Buddy {
+  position: fixed;
+  left: 10px;
+  bottom: 5px;
+  height: clamp(190px, 34vh, 300px);
+  aspect-ratio: 174 / 560;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+}
+#q1Buddy.show { opacity: 1; }
+#q1Buddy img { width: 100%; height: 100%; display: block; object-fit: contain; }
+#q1Buddy .buddyBubble {
+  position: absolute;
+  left: 70%;
+  bottom: calc(100% + 24px);
+  width: 190px;
+  max-width: 55vw;
+  box-sizing: border-box;
+  background: #fff;
+  border: 3px solid #fd79a8;
+  border-radius: 30px;
+  padding: 10px 12px;
+  text-align: center;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #c0392b;
+  opacity: 0;
+  transition: opacity 1s ease .35s;
+}
+#q1Buddy.show .buddyBubble { opacity: 1; }
+#q1Buddy .buddyBubble::before,
+#q1Buddy .buddyBubble::after {
+  content: ""; position: absolute; background: #fff; border: 3px solid #fd79a8; border-radius: 50%;
+}
+#q1Buddy .buddyBubble::before { width: 12px; height: 12px; left: 8px; bottom: -18px; }
+#q1Buddy .buddyBubble::after { width: 7px; height: 7px; left: -3px; bottom: -29px; }
+@media (max-height: 600px) { #q1Buddy { height: 165px; } }
+
 </style>
 </head>
 <body>
@@ -177,17 +220,14 @@
 
 <div id="stage">
 
-  
-<!-- QUESTION 1 -->
-<section class="q" id="q1">
-
-    <h1 class="qtext">mai tumhara achha dost hu na🥺</h1>
-
+  <!-- QUESTION 1 -->
+  <section class="q" id="q1">
+    <h1 class="qtext">mai tumhara achha dost hu na🥰</h1>
     <div class="opts">
-        <button id="yes">Yes</button>
-        <button id="no">No</button>
+      <button id="yes">Yes</button>
+      <button id="no">No</button>
     </div>
-</section>
+  </section>
 
   <!-- QUESTION 2 -->
   <section class="q" id="q2">
@@ -200,6 +240,16 @@
 
 </div>
 
+
+
+<!-- Buddy stays at the bottom-left, like on index.html -->
+<div id="q1Buddy" aria-hidden="true">
+  <div class="buddyBubble">kya hua oneee chan no ko nahi pakad paa rahi ho kya 😈🤣</div>
+  <picture>
+    <source srcset="./buddy.webp" type="image/webp">
+    <img src="./buddy.png" alt="Buddy character">
+  </picture>
+</div>
 
 <script>
 /* =====================================================
@@ -319,6 +369,19 @@ function onApproach() {
   triggerMessage();
 }
 
+/* Buddy fade-in when the cursor first approaches Question 1's No button */
+let q1BuddyShown = false;
+document.addEventListener('pointermove', e => {
+  if (q1BuddyShown || finished || !$('q1').classList.contains('show')) return;
+  const r = $('no').getBoundingClientRect();
+  const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+  const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+  if (Math.hypot(dx, dy) < NEAR_DISTANCE) {
+    q1BuddyShown = true;
+    $('q1Buddy').classList.add('show');
+  }
+}, true);
+
 /* cursor paas aaya? */
 document.addEventListener('pointermove', e => {
   mouseX = e.clientX; mouseY = e.clientY;
@@ -344,6 +407,7 @@ yes.addEventListener('click', async () => {
   no.remove();
   topEl.classList.remove('on');
   await hideQ($('q1'));
+  $('q1Buddy').classList.remove('show');
   topEl.textContent = '';
   showQ($('q2'));                              // Question 2 fade-in
 });
