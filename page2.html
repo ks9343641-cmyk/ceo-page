@@ -154,47 +154,6 @@
   }
 }
 
-/* Buddy character on Question 1 */
-#buddyQ1 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin: 0 auto 20px;
-    opacity: 0;
-    animation: buddyFadeIn 1s ease forwards;
-}
-
-#buddyQ1 img {
-    width: 150px;
-    max-width: 45vw;
-    height: auto;
-    object-fit: contain;
-}
-
-#buddyQ1 .buddy-bubble {
-    background: #fff;
-    color: #333;
-    padding: 12px 18px;
-    border-radius: 20px;
-    max-width: 280px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-}
-
-@keyframes buddyFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 </style>
 </head>
 <body>
