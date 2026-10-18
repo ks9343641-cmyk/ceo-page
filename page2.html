@@ -376,10 +376,14 @@ document.addEventListener('pointermove', e => {
   const r = $('no').getBoundingClientRect();
   const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
   const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
-  if (Math.hypot(dx, dy) < NEAR_DISTANCE) {
+ if (Math.hypot(dx, dy) < NEAR_DISTANCE) {
     q1BuddyShown = true;
-    $('q1Buddy').classList.add('show');
-  }
+    setTimeout(() => {
+        if ($('q1').classList.contains('show') && !finished) {
+            $('q1Buddy').classList.add('show');
+        }
+    }, 6000);
+}
 }, true);
 
 /* cursor paas aaya? */
