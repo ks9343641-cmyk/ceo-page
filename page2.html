@@ -227,6 +227,7 @@
   <!-- Audio played only by Question 2's Yes button -->
   <audio id="yesSound" src="./yes-sound.mp3"
          preload="auto"></audio>
+  <audio id="noApproachSound" src="./mistri-man-jao-sound.mp3" preload="auto"></audio>
 
 
 <div id="topText"></div>
@@ -333,6 +334,15 @@ async function hideQ(q) {
    NO BUTTON  -  cursor paas aaye to poori screen pe kahin bhi kud jata hai
    ===================================================== */
 const yes = $('yes'), no = $('no');
+const noApproachSound = $('noApproachSound');
+const SOUND_REPEAT_GAP = 8000;
+let lastNoSoundTime = -Infinity;
+function playNoApproachSound() {
+  if (finished || Date.now() - lastNoSoundTime < SOUND_REPEAT_GAP) return;
+  lastNoSoundTime = Date.now();
+  noApproachSound.currentTime = 0;
+  noApproachSound.play().catch(() => {});
+}
 let started = false, yesUnlocked = false, busy = false, msgIndex = 0, lastJump = 0;
 let mouseX = -999, mouseY = -999;
 
@@ -382,6 +392,7 @@ async function triggerMessage() {              // upar ka text lagataar loop mei
 
 function onApproach() {
   if (finished) return;
+  playNoApproachSound();
   const now = Date.now();
   if (now - lastJump < 350) return;            // bahut jaldi-jaldi na kude
   lastJump = now;
