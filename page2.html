@@ -277,14 +277,17 @@ const NO_MESSAGES = [
   'no kyu kar rahi hai mai achha dost nahi hu 😭🥹',
   'abb yeh baat hogayi hai ..........😒',
   'kyu peeche pad rahi hai uske nahi aayega haat mai laadli 😈',
-  'arrey arrey arrey re re re maaaaaaaaanjjjaaaaaaaa'
+  'arrey arrey arrey re re re maaaaaaaaanjjjaaaaaaaa',
+  'No dabane se sach thodi badal jayega madam 😏',
+  'mehak ji ka attitude toh dekho zara 😒',
+  'itni bhi kya dushmani hai mujhse 😭'
 ];
 
 const TYPE_SPEED     = 55;      // ms per letter (kam = tez)
 const START_DELAY    = 1000;    // page khulne ke kitni der baad typewriter shuru
 const INTRO_HOLD     = 5000;    // intro text poora hone ke kitni der baad gayab
-const MSG_HOLD       = 2500;    // No wale text poora hone ke kitni der baad gayab
-const YES_UNLOCK     = 20000;   // pehli baar No ke paas jaane ke kitni der baad Yes kaam kare
+const MSG_HOLD       = 3000;    // No wale text poora hone ke kitni der baad gayab
+const YES_UNLOCK     = 25000;   // pehli baar No ke paas jaane ke kitni der baad Yes kaam kare
 const NEAR_DISTANCE  = 90;      // cursor No ke kitne paas aaye to No kudke bhaage (px)
 
 /* =====================================================
@@ -363,12 +366,17 @@ function jump() {
   no.style.left = p.x + 'px'; no.style.top = p.y + 'px';
 }
 
-async function triggerMessage() {              // upar ka agla text
+async function triggerMessage() {              // upar ka text lagataar loop mein
   if (busy || finished) return;
   busy = true;
-  const msg = NO_MESSAGES[msgIndex++ % NO_MESSAGES.length];
-  await typeMsg(msg);
-  if (!finished) { await sleep(MSG_HOLD); await vanish(); }
+  while (!finished) {
+    const msg = NO_MESSAGES[msgIndex++ % NO_MESSAGES.length];
+    await typeMsg(msg);
+    if (finished) break;
+    await sleep(MSG_HOLD);
+    if (finished) break;
+    await vanish();
+  }
   busy = false;
 }
 
@@ -391,7 +399,9 @@ const buddyBubbleText = $('buddyBubbleText');
 const BUDDY_MESSAGES = [
   'kya hua oneee chan no ko nahi pakad paa rahi ho kya 😈🤣',
   'nah maan re chori tu code bhi jaane hai ki mai achha dost hu 😭',
-  'Astagfirullah 😠'
+  'Astagfirullah 😠',
+  'madam ka confidence toh dekho 😏',
+  'ek chhota sa sawaal aur itna drama 😭😂'
 ];
 let buddyMessageTimer = null;
 function startBuddyMessages() {
