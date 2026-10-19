@@ -196,6 +196,12 @@
   transition: opacity 1s ease .35s;
 }
 #q1Buddy.show .buddyBubble { opacity: 1; }
+#buddyBubbleText {
+  display: inline-block;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+#buddyBubbleText.fade-out { opacity: 0; }
 #q1Buddy .buddyBubble::before,
 #q1Buddy .buddyBubble::after {
   content: ""; position: absolute; background: #fff; border: 3px solid #fd79a8; border-radius: 50%;
@@ -251,7 +257,7 @@
 
 <!-- Buddy stays at the bottom-left, like on index.html -->
 <div id="q1Buddy" aria-hidden="true">
-  <div class="buddyBubble">kya hua oneee chan no ko nahi pakad paa rahi ho kya 😈🤣</div>
+  <div class="buddyBubble"><span id="buddyBubbleText">kya hua oneee chan no ko nahi pakad paa rahi ho kya 😈🤣</span></div>
   <picture>
     <source srcset="./buddy.webp" type="image/webp">
     <img src="./buddy.png" alt="Buddy character">
@@ -268,7 +274,10 @@ const INTRO_TEXT = 'Kuch dikhane se pehle, tumhe mere kuch sawalo ke jawab dene 
 const NO_MESSAGES = [
   'yaa allah ........ dekh rahe ho aap iss ladki ko 😒',
   'arrey arrey nahi maan rahi ho tum ..... jayda shaani ban rahi ho 🤣',
-  'no kyu kar rahi hai mai achha dost nahi hu 😭🥹'
+  'no kyu kar rahi hai mai achha dost nahi hu 😭🥹',
+  'abb yeh baat hogayi hai ..........😒',
+  'kyu peeche pad rahi hai uske nahi aayega haat mai laadli 😈',
+  'arrey arrey arrey re re re maaaaaaaaanjjjaaaaaaaa'
 ];
 
 const TYPE_SPEED     = 55;      // ms per letter (kam = tez)
@@ -378,6 +387,35 @@ function onApproach() {
 
 /* Buddy fade-in when the cursor first approaches Question 1's No button */
 let q1BuddyShown = false;
+const buddyBubbleText = $('buddyBubbleText');
+const BUDDY_MESSAGES = [
+  'kya hua oneee chan no ko nahi pakad paa rahi ho kya 😈🤣',
+  'nah maan re chori tu code bhi jaane hai ki mai achha dost hu 😭',
+  'Astagfirullah 😠'
+];
+let buddyMessageTimer = null;
+function startBuddyMessages() {
+  if (buddyMessageTimer !== null) return;
+  let buddyMessageIndex = 0;
+  const showNextBuddyMessage = () => {
+    if (finished || !$('q1Buddy').classList.contains('show')) {
+      buddyMessageTimer = null;
+      return;
+    }
+    buddyBubbleText.classList.add('fade-out');
+    setTimeout(() => {
+      if (finished || !$('q1Buddy').classList.contains('show')) {
+        buddyMessageTimer = null;
+        return;
+      }
+      buddyMessageIndex = (buddyMessageIndex + 1) % BUDDY_MESSAGES.length;
+      buddyBubbleText.textContent = BUDDY_MESSAGES[buddyMessageIndex];
+      buddyBubbleText.classList.remove('fade-out');
+      buddyMessageTimer = setTimeout(showNextBuddyMessage, 7000);
+    }, 600);
+  };
+  buddyMessageTimer = setTimeout(showNextBuddyMessage, 7000);
+}
 document.addEventListener('pointermove', e => {
   if (q1BuddyShown || finished || !$('q1').classList.contains('show')) return;
   const r = $('no').getBoundingClientRect();
@@ -388,6 +426,7 @@ document.addEventListener('pointermove', e => {
     setTimeout(() => {
         if ($('q1').classList.contains('show') && !finished) {
             $('q1Buddy').classList.add('show');
+            startBuddyMessages();
         }
     }, 6000);
 }
